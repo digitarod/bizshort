@@ -7,7 +7,11 @@ interface ImageSlideProps {
   fadeDuration?: number;
 }
 
-export const ImageSlide: React.FC<ImageSlideProps> = ({ src, duration, fadeDuration = 15 }) => {
+export const ImageSlide: React.FC<ImageSlideProps> = ({
+  src,
+  duration,
+  fadeDuration = 15,
+}) => {
   const frame = useCurrentFrame();
 
   const opacity = interpolate(

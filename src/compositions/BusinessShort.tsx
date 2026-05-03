@@ -10,48 +10,59 @@ import {
   useVideoConfig,
 } from "remotion";
 import { z } from "zod";
-import { IntroScene } from "./scenes/IntroScene";
+import { ExplainScene } from "./scenes/ExplainScene";
+import { HookScene } from "./scenes/HookScene";
 import { OutroScene } from "./scenes/OutroScene";
-import { ProductScene } from "./scenes/ProductScene";
 
 export const businessShortSchema = z.object({
-  company: z.string().default("株式会社Example"),
-  tagline: z.string().default("未来を創る技術"),
-  cta: z.string().default("詳しくはプロフィールへ"),
+  hook: z.string().default("なぜ上司に指示されると\nやる気が消えるのか？"),
+  keyword: z.string().default("心理的リアクタンス"),
+  points: z.array(z.string()).default([
+    "自由を制限されると反発する心理",
+    "指示より提案が効果的な理由",
+    "部下のやる気を引き出す言い方",
+  ]),
+  outro: z.string().default("指示ではなく\n選択肢を与えよう"),
+  handle: z.string().default("@bizpsych_jp"),
   imagePaths: z.array(z.string()).default([]),
-  audioPaths: z.array(z.string()).default([]),
   bgmPath: z.string().optional(),
-  accentColor: z.string().default("#0066FF"),
+  accentColor: z.string().default("#FF6B35"),
+  bgColor: z.string().default("#0d0d0d"),
 });
 
 export type BusinessShortProps = z.infer<typeof businessShortSchema>;
 
-export const INTRO_FRAMES = 90; // 3秒
-export const IMAGE_FRAMES = 90; // 画像1枚あたり3秒
-export const OUTRO_FRAMES = 90; // 3秒
+// フレーム定数
+export const HOOK_FRAMES = 90;      // 3秒
+const FRAMES_PER_POINT = 50;       // 1ポイントあたり
+export const OUTRO_FRAMES = 90;    // 3秒
+
+function explainFrames(points: string[]): number {
+  return Math.max(points.length * FRAMES_PER_POINT, 120);
+}
 
 export const businessShortCalculateMetadata: CalculateMetadataFunction<
   BusinessShortProps
 > = ({ props }) => {
-  const imageCount = Math.max(props.imagePaths.length, 1);
-  const durationInFrames = INTRO_FRAMES + imageCount * IMAGE_FRAMES + OUTRO_FRAMES;
+  const durationInFrames =
+    HOOK_FRAMES + explainFrames(props.points) + OUTRO_FRAMES;
   return { durationInFrames, fps: 30 };
 };
 
 export const BusinessShort: React.FC<BusinessShortProps> = ({
-  company,
-  tagline,
-  cta,
+  hook,
+  keyword,
+  points,
+  outro,
+  handle,
   imagePaths,
-  audioPaths,
   bgmPath,
   accentColor,
+  bgColor,
 }) => {
   const { durationInFrames, fps } = useVideoConfig();
   const frame = useCurrentFrame();
-
-  const imageCount = Math.max(imagePaths.length, 1);
-  const productDuration = imageCount * IMAGE_FRAMES;
+  const explainDuration = explainFrames(points);
 
   const bgmVolume = interpolate(
     frame,
@@ -61,25 +72,43 @@ export const BusinessShort: React.FC<BusinessShortProps> = ({
   );
 
   return (
-    <AbsoluteFill style={{ background: "#0a0a0a" }}>
-      {bgmPath ? <Audio src={staticFile(bgmPath)} volume={bgmVolume} /> : null}
+    <AbsoluteFill style={{ background: bgColor }}>
+      {bgmPath ? (
+        <Audio src={staticFile(bgmPath)} volume={bgmVolume} />
+      ) : null}
 
-      <Sequence from={0} durationInFrames={INTRO_FRAMES}>
-        <IntroScene company={company} tagline={tagline} accentColor={accentColor} />
+      {/* Hook シーン: フック質問 */}
+      <Sequence from={0} durationInFrames={HOOK_FRAMES}>
+        <HookScene
+          hook={hook}
+          accentColor={accentColor}
+          bgColor={bgColor}
+          imagePath={imagePaths[0]}
+        />
       </Sequence>
 
-      <Sequence from={INTRO_FRAMES} durationInFrames={productDuration}>
-        <ProductScene imagePaths={imagePaths} accentColor={accentColor} />
+      {/* Explain シーン: キーワード + ポイント */}
+      <Sequence from={HOOK_FRAMES} durationInFrames={explainDuration}>
+        <ExplainScene
+          keyword={keyword}
+          points={points}
+          accentColor={accentColor}
+          bgColor={bgColor}
+          imagePaths={imagePaths}
+        />
       </Sequence>
 
-      {audioPaths.map((audioPath, i) => (
-        <Sequence key={i} from={INTRO_FRAMES + i * IMAGE_FRAMES} durationInFrames={IMAGE_FRAMES}>
-          <Audio src={staticFile(audioPath)} />
-        </Sequence>
-      ))}
-
-      <Sequence from={INTRO_FRAMES + productDuration} durationInFrames={OUTRO_FRAMES}>
-        <OutroScene company={company} cta={cta} accentColor={accentColor} />
+      {/* Outro シーン: まとめ + フォロー促進 */}
+      <Sequence
+        from={HOOK_FRAMES + explainDuration}
+        durationInFrames={OUTRO_FRAMES}
+      >
+        <OutroScene
+          outro={outro}
+          handle={handle}
+          accentColor={accentColor}
+          bgColor={bgColor}
+        />
       </Sequence>
     </AbsoluteFill>
   );

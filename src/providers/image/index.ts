@@ -1,20 +1,26 @@
-import type { ImageProvider } from "../../types";
-import { generateImage as pollinationsGen } from "./pollinations";
-import { generateImage as huggingfaceGen } from "./huggingface";
+import type {
+  FalImageModel,
+  GeminiImageModel,
+  ImageProvider,
+  OpenAIImageModel,
+} from "../../types";
+import { generateImage as falGen } from "./fal";
+import { generateImage as geminiGen } from "./gemini";
 import { generateImage as openaiGen } from "./openai";
 
 export async function generateImage(
   prompt: string,
   outputDir: string,
-  provider: ImageProvider = "pollinations"
+  provider: ImageProvider = "fal",
+  model?: FalImageModel | GeminiImageModel | OpenAIImageModel
 ): Promise<string> {
   switch (provider) {
-    case "pollinations":
-      return pollinationsGen(prompt, outputDir);
-    case "huggingface":
-      return huggingfaceGen(prompt, outputDir);
+    case "fal":
+      return falGen(prompt, outputDir, model as FalImageModel | undefined);
+    case "gemini":
+      return geminiGen(prompt, outputDir, model as GeminiImageModel | undefined);
     case "openai":
-      return openaiGen(prompt, outputDir);
+      return openaiGen(prompt, outputDir, model as OpenAIImageModel | undefined);
     default:
       throw new Error(`未対応の画像プロバイダー: ${provider}`);
   }

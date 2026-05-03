@@ -4,8 +4,14 @@ import { Command } from "commander";
 import fs from "fs";
 import path from "path";
 import { generateImage } from "./providers/image";
-import { generateSpeech } from "./providers/tts";
-import type { ImageProvider, TtsProvider } from "./types";
+import { getPreset, RESOLUTION_PRESETS } from "./presets/resolution";
+import type {
+  FalImageModel,
+  GeminiImageModel,
+  ImageProvider,
+  OpenAIImageModel,
+  ResolutionPreset,
+} from "./types";
 
 const PUBLIC_DIR = path.resolve("public");
 const IMAGES_DIR = path.join(PUBLIC_DIR, "images");
@@ -16,16 +22,27 @@ const program = new Command();
 program
   .name("bizshort")
   .description("Remotion ビジネスショート動画生成 CLI")
-  .option("--company <name>", "会社名", "株式会社Example")
-  .option("--tagline <text>", "タグライン", "未来を創る技術")
-  .option("--cta <text>", "CTAテキスト", "詳しくはプロフィールへ")
+  .option(
+    "--preset <preset>",
+    `解像度プリセット: ${Object.keys(RESOLUTION_PRESETS).join("|")}`,
+    "shorts"
+  )
+  .option("--hook <text>", "フック質問 (改行は \\n で指定)", "なぜ上司に指示されると\\nやる気が消えるのか？")
+  .option("--keyword <text>", "キーワード", "心理的リアクタンス")
+  .option("--points <texts>", "ポイント（カンマ区切り）", "自由を制限されると反発する心理,指示より提案が効果的")
+  .option("--outro <text>", "まとめテキスト (改行は \\n で指定)", "指示ではなく\\n選択肢を与えよう")
+  .option("--handle <text>", "@ハンドル名", "")
   .option("--prompts <prompts>", "画像生成プロンプト（カンマ区切り）")
-  .option("--narrations <texts>", "ナレーションテキスト（カンマ区切り）")
-  .option("--bgm <file>", "BGMファイルパス（public/以下の相対パス）")
-  .option("--accent <color>", "アクセントカラー（16進数）", "#0066FF")
-  .option("--output <file>", "出力ファイルパス", "output/video.mp4")
-  .option("--image-provider <provider>", "画像生成API: pollinations|huggingface|openai", "pollinations")
-  .option("--tts-provider <provider>", "TTS API: voicevox|google|elevenlabs", "voicevox");
+  .option("--bgm <file>", "BGM ファイルパス（public/audio/ 以下）")
+  .option("--accent <color>", "アクセントカラー", "#FF6B35")
+  .option("--bg <color>", "背景カラー", "#0d0d0d")
+  .option(
+    "--image-provider <provider>",
+    "画像プロバイダー: fal|gemini|openai",
+    "fal"
+  )
+  .option("--image-model <model>", "画像モデル (省略時はプロバイダーのデフォルト)")
+  .option("--output <file>", "出力ファイルパス", "output/video.mp4");
 
 program.parse(process.argv);
 const opts = program.opts();
@@ -35,47 +52,45 @@ async function main() {
     fs.mkdirSync(d, { recursive: true })
   );
 
+  const preset = getPreset(opts.preset as ResolutionPreset);
+  console.log(`プリセット: ${preset.label} (${preset.width}×${preset.height})`);
+
+  // 画像生成
   const imagePrompts: string[] = opts.prompts
     ? opts.prompts.split(",").map((s: string) => s.trim())
     : [];
-  const narrationTexts: string[] = opts.narrations
-    ? opts.narrations.split(",").map((s: string) => s.trim())
-    : [];
 
+  let imagePaths: string[] = [];
   if (imagePrompts.length > 0) {
-    console.log(`画像を生成中 (${opts.imageProvider}) ...`);
+    const provider = opts.imageProvider as ImageProvider;
+    const model = opts.imageModel as FalImageModel | GeminiImageModel | OpenAIImageModel | undefined;
+    console.log(`画像を生成中 (${provider} / ${model ?? "default"}) ...`);
+    imagePaths = await Promise.all(
+      imagePrompts.map((p) => generateImage(p, IMAGES_DIR, provider, model))
+    );
   }
-  const imagePaths = await Promise.all(
-    imagePrompts.map((p) => generateImage(p, IMAGES_DIR, opts.imageProvider as ImageProvider))
-  );
 
-  if (narrationTexts.length > 0) {
-    console.log(`音声を生成中 (${opts.ttsProvider}) ...`);
-  }
-  const audioPaths =
-    narrationTexts.length > 0
-      ? await Promise.all(
-          narrationTexts.map((t) =>
-            generateSpeech(t, AUDIO_DIR, opts.ttsProvider as TtsProvider)
-          )
-        )
-      : [];
-
-  console.log("Remotionバンドルを構築中...");
+  console.log("Remotion バンドルを構築中...");
   const bundleUrl = await bundle({
     entryPoint: path.resolve("src/Root.tsx"),
     webpackOverride: (config) => config,
     publicDir: PUBLIC_DIR,
   });
 
+  const hook = (opts.hook as string).replace(/\\n/g, "\n");
+  const outro = (opts.outro as string).replace(/\\n/g, "\n");
+  const points = (opts.points as string).split(",").map((s: string) => s.trim());
+
   const inputProps = {
-    company: opts.company as string,
-    tagline: opts.tagline as string,
-    cta: opts.cta as string,
+    hook,
+    keyword: opts.keyword as string,
+    points,
+    outro,
+    handle: opts.handle as string,
     imagePaths,
-    audioPaths,
     bgmPath: opts.bgm as string | undefined,
     accentColor: opts.accent as string,
+    bgColor: opts.bg as string,
   };
 
   const composition = await selectComposition({

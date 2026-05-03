@@ -1,54 +1,104 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { AnimatedText } from "../../components/AnimatedText";
 
 interface OutroSceneProps {
-  company: string;
-  cta: string;
+  outro: string;
+  handle?: string;
   accentColor: string;
+  bgColor: string;
 }
 
-export const OutroScene: React.FC<OutroSceneProps> = ({ company, cta, accentColor }) => {
+export const OutroScene: React.FC<OutroSceneProps> = ({
+  outro,
+  handle,
+  accentColor,
+  bgColor,
+}) => {
   const frame = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
 
-  const bgOpacity = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: "clamp" });
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
+  const fadeOut = interpolate(
+    frame,
+    [durationInFrames - 10, durationInFrames],
+    [1, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+
+  const outroLines = outro.split("\n").filter(Boolean);
 
   return (
     <AbsoluteFill
       style={{
-        background: `linear-gradient(180deg, #0a0a0a 0%, ${accentColor}15 100%)`,
+        background: `linear-gradient(180deg, ${bgColor} 0%, ${accentColor}22 100%)`,
         justifyContent: "center",
         alignItems: "center",
         flexDirection: "column",
-        gap: 32,
-        opacity: bgOpacity,
+        gap: 0,
+        padding: "0 60px",
+        opacity: fadeIn * fadeOut,
       }}
     >
-      <AnimatedText
-        text={cta}
-        delay={5}
+      {/* アクセントライン */}
+      <div
         style={{
-          fontSize: 52,
-          fontWeight: "700",
-          color: "#ffffff",
-          textAlign: "center",
-          padding: "0 50px",
-          lineHeight: 1.3,
-          fontFamily: "Arial, sans-serif",
+          width: 60,
+          height: 4,
+          background: accentColor,
+          borderRadius: 2,
+          marginBottom: 48,
         }}
       />
-      <div style={{ width: 60, height: 3, background: accentColor, borderRadius: 2 }} />
+
+      {/* まとめテキスト */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 16, marginBottom: 48 }}>
+        {outroLines.map((line, i) => (
+          <AnimatedText
+            key={i}
+            text={line}
+            delay={8 + i * 10}
+            style={{
+              fontSize: 52,
+              fontWeight: "800",
+              color: "#ffffff",
+              textAlign: "center",
+              lineHeight: 1.3,
+              fontFamily: "Arial, sans-serif",
+              textShadow: "0 2px 12px rgba(0,0,0,0.4)",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* フォロー促進 */}
       <AnimatedText
-        text={company}
-        delay={20}
+        text="フォローで毎日学べる"
+        delay={28}
         style={{
-          fontSize: 32,
-          fontWeight: "400",
+          fontSize: 34,
+          fontWeight: "600",
           color: accentColor,
           textAlign: "center",
           fontFamily: "Arial, sans-serif",
+          marginBottom: 24,
         }}
       />
+
+      {/* ハンドル */}
+      {handle && (
+        <AnimatedText
+          text={handle}
+          delay={38}
+          style={{
+            fontSize: 30,
+            fontWeight: "400",
+            color: "#ffffff88",
+            textAlign: "center",
+            fontFamily: "Arial, sans-serif",
+          }}
+        />
+      )}
     </AbsoluteFill>
   );
 };
