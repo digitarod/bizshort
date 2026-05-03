@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bizshort — AI ビジネスショート動画生成</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap"
+    rel="stylesheet"
+  />
+</head>
+<body>
+  <!-- ナビゲーション -->
+  <header>
+    <nav class="nav">
+      <div class="nav-logo">biz<span>short</span></div>
+      <a href="#contact" class="nav-cta">無料で始める</a>
+    </nav>
+  </header>
+
+  <!-- ヒーロー -->
+  <section class="hero">
+    <div class="hero-inner">
+      <div class="hero-badge">AI × Remotion</div>
+      <h1>
+        テキストを入力するだけで<br />
+        <span class="accent">ビジネス動画</span>が完成
+      </h1>
+      <p class="hero-sub">
+        会社名・タグラインを入力するだけで、AIが画像・音声を生成し<br />
+        SNS向けショート動画（縦型 9:16）を自動レンダリングします。
+      </p>
+      <div class="hero-actions">
+        <a href="#pricing" class="btn-primary">プランを見る</a>
+        <a href="#how" class="btn-outline">使い方を見る</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><strong>1080×1920</strong><span>縦型フルHD</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><strong>30fps</strong><span>滑らかな映像</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><strong>〜30秒</strong><span>生成時間</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-mockup">
+        <div class="phone-screen">
+          <div class="video-preview">
+            <div class="preview-intro">
+              <div class="preview-line"></div>
+              <div class="preview-company">株式会社Example</div>
+              <div class="preview-tagline">未来を創る技術</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 機能 -->
+  <section class="features" id="features">
+    <div class="container">
+      <h2 class="section-title">主な機能</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎬</div>
+          <h3>Remotion レンダリング</h3>
+          <p>Reactコンポーネントをそのままビデオに。プログラマブルな動画生成で高い再現性を実現。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <h3>AI 画像生成</h3>
+          <p>Pollinations.ai（無料・APIキー不要）をデフォルト採用。DALL-E 3 / Hugging Face にも対応。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎤</div>
+          <h3>日本語 TTS ナレーション</h3>
+          <p>VOICEVOX（無料）による高品質な日本語音声合成。Google TTS / ElevenLabs にも対応。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌐</div>
+          <h3>HTTP API 対応</h3>
+          <p>REST API でリモートから動画生成をトリガー。curl や任意の言語から呼び出し可能。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔌</div>
+          <h3>プラグイン型 API</h3>
+          <p>画像・音声・動画の生成 API を1行で差し替え。将来のサービス追加も容易。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <h3>縦型 9:16 対応</h3>
+          <p>TikTok・Instagram Reels・YouTube Shorts に最適化した 1080×1920 出力。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 使い方 -->
+  <section class="how" id="how">
+    <div class="container">
+      <h2 class="section-title">使い方</h2>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-content">
+            <h3>情報を入力</h3>
+            <p>会社名・タグライン・画像プロンプトを JSON または CLI オプションで指定</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-content">
+            <h3>AI が素材を生成</h3>
+            <p>Pollinations.ai で画像を生成。VOICEVOX でナレーション音声を合成</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-content">
+            <h3>Remotion でレンダリング</h3>
+            <p>イントロ → 画像スライド → アウトロのシーンを MP4 に書き出し</p>
+          </div>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-content">
+            <h3>MP4 をダウンロード</h3>
+            <p>/download/:filename エンドポイントから完成動画を取得</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-demo">
+        <div class="code-label">API 呼び出し例</div>
+        <pre><code>curl -X POST https://your-server.com/api/render \
+  -H "Content-Type: application/json" \
+  -d '{
+    "company": "株式会社Example",
+    "tagline": "未来を創る技術",
+    "imagePrompts": ["modern office interior", "tech product"],
+    "narrations": ["こんにちは、株式会社Exampleです"],
+    "accentColor": "#0066FF"
+  }'</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 料金 -->
+  <section class="pricing" id="pricing">
+    <div class="container">
+      <h2 class="section-title">料金プラン</h2>
+      <div class="plan-grid">
+        <div class="plan-card">
+          <h3>スターター</h3>
+          <div class="price">無料<span class="price-sub">/月</span></div>
+          <ul class="plan-features">
+            <li>✓ 月5本まで</li>
+            <li>✓ Pollinations.ai（無料AI画像）</li>
+            <li>✓ VOICEVOX（無料TTS）</li>
+            <li>✓ HTTP API アクセス</li>
+            <li class="disabled">✗ 高品質AIモデル</li>
+          </ul>
+          <a href="#contact" class="btn-outline full">始める</a>
+        </div>
+        <div class="plan-card featured">
+          <div class="plan-badge">おすすめ</div>
+          <h3>プロ</h3>
+          <div class="price">¥9,800<span class="price-sub">/月</span></div>
+          <ul class="plan-features">
+            <li>✓ 月30本まで</li>
+            <li>✓ DALL-E 3 高品質画像</li>
+            <li>✓ ElevenLabs 高品質音声</li>
+            <li>✓ 優先サポート</li>
+            <li>✓ カスタムカラー対応</li>
+          </ul>
+          <a href="#contact" class="btn-primary full">お問い合わせ</a>
+        </div>
+        <div class="plan-card">
+          <h3>エンタープライズ</h3>
+          <div class="price">要相談</div>
+          <ul class="plan-features">
+            <li>✓ 無制限生成</li>
+            <li>✓ カスタムテンプレート</li>
+            <li>✓ API 統合サポート</li>
+            <li>✓ 専任担当者</li>
+            <li>✓ SLA 保証</li>
+          </ul>
+          <a href="#contact" class="btn-outline full">お問い合わせ</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- お問い合わせ -->
+  <section class="contact" id="contact">
+    <div class="container contact-inner">
+      <h2 class="section-title">お問い合わせ</h2>
+      <p class="contact-sub">ご質問・デモのご依頼・お見積りはお気軽にどうぞ。</p>
+      <!-- Formspree: YOUR_FORM_ID を自分のフォームIDに書き換えてください -->
+      <form class="contact-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
+        <input type="text" name="name" placeholder="お名前" required />
+        <input type="email" name="email" placeholder="メールアドレス" required />
+        <select name="plan">
+          <option value="">プランを選択（任意）</option>
+          <option value="starter">スターター（無料）</option>
+          <option value="pro">プロ</option>
+          <option value="enterprise">エンタープライズ</option>
+        </select>
+        <textarea name="message" placeholder="お問い合わせ内容" rows="5" required></textarea>
+        <button type="submit" class="btn-primary full">送信する</button>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="container footer-inner">
+      <div class="footer-logo">biz<span>short</span></div>
+      <p class="footer-text">Powered by Remotion + AI</p>
+      <p class="footer-copy">© 2025 bizshort. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

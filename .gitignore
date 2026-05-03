@@ -1,0 +1,10 @@
+node_modules/
+dist/
+output/
+public/images/*.jpg
+public/images/*.png
+public/audio/*.wav
+public/audio/*.mp3
+.env
+*.local
+.DS_Store
