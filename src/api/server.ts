@@ -18,6 +18,7 @@ const PUBLIC_DIR = path.resolve("public");
 const OUTPUT_DIR = path.resolve("output");
 const IMAGES_DIR = path.join(PUBLIC_DIR, "images");
 const AUDIO_DIR = path.join(PUBLIC_DIR, "audio");
+const EDITOR_HTML = path.resolve("src/api/editor.html");
 
 [OUTPUT_DIR, IMAGES_DIR, AUDIO_DIR].forEach((d) => fs.mkdirSync(d, { recursive: true }));
 
@@ -139,6 +140,14 @@ app.get("/api/presets", (_req, res) => {
   res.json({ presets: RESOLUTION_PRESETS });
 });
 
+// 編集UI
+app.get("/editor", (_req, res) => {
+  res.sendFile(EDITOR_HTML);
+});
+
+// output ディレクトリを静的配信 (ダウンロード補助)
+app.use("/output", express.static(OUTPUT_DIR));
+
 async function start() {
   await initBundle();
   const port = Number(process.env.PORT ?? 3000);
@@ -147,7 +156,8 @@ async function start() {
     console.log("  POST /api/render       — 動画を生成");
     console.log("  GET  /download/:file   — MP4 ダウンロード");
     console.log("  GET  /health           — ヘルスチェック");
-    console.log("  GET  /api/presets      — 解像度プリセット一覧\n");
+    console.log("  GET  /api/presets      — 解像度プリセット一覧");
+    console.log(`  GET  /editor           — 編集UI\n`);
     console.log("例 (Fal.ai デフォルト):");
     console.log(`  curl -X POST http://localhost:${port}/api/render \\`);
     console.log(`    -H "Content-Type: application/json" \\`);

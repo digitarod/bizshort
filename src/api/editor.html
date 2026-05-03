@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>bizshort — 動画エディター</title>
+<style>
+:root {
+  --accent: #FF6B35;
+  --accent2: #0066ff;
+  --bg: #0a0a0a;
+  --bg-card: #111;
+  --bg-card2: #161616;
+  --bg-input: #1a1a1a;
+  --text: #f0f0f0;
+  --text-muted: #777;
+  --border: #2a2a2a;
+  --border-focus: #FF6B35;
+  --radius: 10px;
+  --font: -apple-system, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── ヘッダー ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 1px solid var(--border);
+  background: #0d0d0d;
+  flex-shrink: 0;
+}
+
+.logo { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; }
+.logo span { color: var(--accent); }
+
+.header-actions { display: flex; gap: 10px; align-items: center; }
+
+/* ── メインレイアウト ── */
+.main {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── フォームパネル ── */
+.form-panel {
+  overflow-y: auto;
+  padding: 20px 24px;
+  border-right: 1px solid var(--border);
+}
+
+.form-panel::-webkit-scrollbar { width: 4px; }
+.form-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+  margin-top: 28px;
+}
+
+.section-label:first-child { margin-top: 0; }
+
+.field { margin-bottom: 16px; }
+
+.field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ccc;
+  margin-bottom: 6px;
+}
+
+.field-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* テキスト入力 */
+input[type="text"],
+input[type="color"],
+select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+input[type="text"]:focus,
+select:focus { border-color: var(--border-focus); }
+
+input[type="color"] {
+  padding: 4px 6px;
+  height: 38px;
+  cursor: pointer;
+  width: 56px;
+  flex-shrink: 0;
+}
+
+.color-row { display: flex; gap: 8px; align-items: center; }
+.color-row input[type="text"] { flex: 1; }
+
+/* ── 改行対応テキストエリア ── */
+.break-field {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.break-field:focus-within { border-color: var(--border-focus); }
+
+.break-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  background: #141414;
+}
+
+.break-toolbar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+.btn-break {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(255,107,53,0.1);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 4px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font);
+}
+
+.btn-break:hover { background: rgba(255,107,53,0.2); }
+
+.break-preview {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+  min-height: 20px;
+  line-height: 1.4;
+}
+
+.break-preview .br-mark {
+  display: inline-block;
+  background: rgba(255,107,53,0.2);
+  color: var(--accent);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 700;
+  margin: 0 1px;
+  vertical-align: middle;
+}
+
+.break-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 8px 12px 10px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.6;
+  outline: none;
+  resize: none;
+  min-height: 64px;
+  display: block;
+}
+
+/* ── ポイントリスト ── */
+.points-list { display: flex; flex-direction: column; gap: 8px; }
+
+.point-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.point-bullet {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.point-input {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.point-input:focus { border-color: var(--border-focus); }
+
+.btn-del {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-del:hover { background: #2a1a1a; color: #ff4444; border-color: #ff4444; }
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  cursor: pointer;
+  width: 100%;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: var(--font);
+}
+
+.btn-add:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── プロバイダー設定 ── */
+.provider-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* ── 区切り線 ── */
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 20px 0;
+}
+
+/* ── ボタン ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 7px;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+  border: none;
+  outline: none;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) { opacity: 0.85; }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg-card2);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-full { width: 100%; }
+
+/* ── プレビューパネル ── */
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  background: #0d0d0d;
+  overflow-y: auto;
+  gap: 16px;
+}
+
+.preview-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  align-self: flex-start;
+}
+
+/* 縦型スマホモックアップ */
+.phone {
+  width: 180px;
+  flex-shrink: 0;
+  aspect-ratio: 9/16;
+  background: #1a1a1a;
+  border-radius: 24px;
+  border: 2px solid #2a2a2a;
+  padding: 12px;
+  box-shadow: 0 0 40px rgba(255,107,53,0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* シーン切り替えタブ */
+.scene-tabs {
+  display: flex;
+  width: 100%;
+  gap: 4px;
+}
+
+.scene-tab {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-card2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font);
+}
+
+.scene-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* 各シーンのプレビュー内容 */
+.scene-preview {
+  display: none;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 10px;
+  text-align: center;
+  gap: 8px;
+}
+
+.scene-preview.active { display: flex; }
+
+.pv-accent-line {
+  width: 32px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.pv-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+}
+
+.pv-hook {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.3;
+  white-space: pre-line;
+  word-break: break-all;
+}
+
+.pv-qmark {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pv-keyword-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: 1px solid;
+  align-self: flex-start;
+  letter-spacing: 0.5px;
+}
+
+.pv-points {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-self: flex-start;
+  width: 100%;
+}
+
+.pv-point {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  text-align: left;
+  font-size: 11px;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.pv-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.pv-outro-text {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+  white-space: pre-line;
+  line-height: 1.3;
+  word-break: break-all;
+}
+
+.pv-follow {
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.pv-handle {
+  font-size: 9px;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ── ステータス / レンダリング ── */
+.render-status {
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  font-size: 13px;
+  display: none;
+}
+
+.render-status.visible { display: block; }
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.status-dot.working { background: var(--accent); animation: pulse 1s infinite; }
+.status-dot.done { background: #4caf50; }
+.status-dot.error { background: #f44336; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.status-text { font-weight: 600; color: var(--text); }
+.status-message { color: var(--text-muted); font-size: 12px; }
+
+.progress-bar-wrap {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.download-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #4caf50;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(76,175,80,0.1);
+  border: 1px solid rgba(76,175,80,0.3);
+  border-radius: 6px;
+}
+
+.download-link:hover { background: rgba(76,175,80,0.2); }
+
+/* ── JSON 確認ダイアログ ── */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #141414;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  width: 480px;
+  max-width: 95vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.modal-json {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 14px;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #a8e6cf;
+  line-height: 1.6;
+  overflow-y: auto;
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<!-- ヘッダー -->
+<header class="header">
+  <div class="logo">biz<span>short</span> <span style="font-size:13px;font-weight:500;color:var(--text-muted);margin-left:8px;">エディター</span></div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" id="btn-json">JSON 確認</button>
+    <button class="btn btn-primary" id="btn-render" disabled>
+      ⬤ レンダリング
+    </button>
+  </div>
+</header>
+
+<!-- メイン -->
+<div class="main">
+
+  <!-- 左: フォームパネル -->
+  <div class="form-panel" id="form-panel">
+
+    <p class="section-label">字幕テキスト</p>
+
+    <!-- フック質問 -->
+    <div class="field">
+      <div class="field-label">
+        フック質問
+        <span class="field-hint">HookScene に表示</span>
+      </div>
+      <div class="break-field" id="bf-hook">
+        <div class="break-toolbar">
+          <span class="break-toolbar-label">改行プレビュー:</span>
+          <button class="btn-break" onclick="insertBreak('hook-ta')">↵ 改行を挿入</button>
+        </div>
+        <div class="break-preview" id="hook-preview"></div>
+        <textarea class="break-textarea" id="hook-ta" rows="3"
+          placeholder="なぜ上司に指示されると&#10;やる気が消えるのか？"
+          oninput="syncPreview('hook-ta','hook-preview');updatePhonePreview()"></textarea>
+      </div>
+    </div>
+
+    <!-- キーワード -->
+    <div class="field">
+      <div class="field-label">
+        キーワード
+        <span class="field-hint">ExplainScene のバッジ</span>
+      </div>
+      <input type="text" id="keyword-input" value="心理的リアクタンス"
+        oninput="updatePhonePreview()" />
+    </div>
+
+    <!-- ポイント一覧 -->
+    <div class="field">
+      <div class="field-label">
+        ポイント
+        <span class="field-hint">ExplainScene に1行ずつ表示</span>
+      </div>
+      <div class="points-list" id="points-list"></div>
+      <button class="btn-add" style="margin-top:8px" onclick="addPoint()">＋ ポイントを追加</button>
+    </div>
+
+    <!-- まとめ -->
+    <div class="field">
+      <div class="field-label">
+        まとめテキスト
+        <span class="field-hint">OutroScene に表示</span>
+      </div>
+      <div class="break-field" id="bf-outro">
+        <div class="break-toolbar">
+          <span class="break-toolbar-label">改行プレビュー:</span>
+          <button class="btn-break" onclick="insertBreak('outro-ta')">↵ 改行を挿入</button>
+        </div>
+        <div class="break-preview" id="outro-preview"></div>
+        <textarea class="break-textarea" id="outro-ta" rows="2"
+          placeholder="指示ではなく&#10;選択肢を与えよう"
+          oninput="syncPreview('outro-ta','outro-preview');updatePhonePreview()"></textarea>
+      </div>
+    </div>
+
+    <!-- ハンドル -->
+    <div class="field">
+      <div class="field-label">
+        @ハンドル
+        <span class="field-hint">OutroScene 下部に表示</span>
+      </div>
+      <input type="text" id="handle-input" placeholder="@bizpsych_jp"
+        oninput="updatePhonePreview()" />
+    </div>
+
+    <hr class="divider" />
+    <p class="section-label">スタイル</p>
+
+    <!-- カラー -->
+    <div class="provider-grid">
+      <div class="field">
+        <div class="field-label">アクセントカラー</div>
+        <div class="color-row">
+          <input type="color" id="accent-color" value="#FF6B35"
+            oninput="syncColorText('accent-color','accent-text');updatePhonePreview()" />
+          <input type="text" id="accent-text" value="#FF6B35"
+            oninput="syncColorPicker('accent-text','accent-color');updatePhonePreview()" />
+        </div>
+      </div>
+      <div class="field">
+        <div class="field-label">背景カラー</div>
+        <div class="color-row">
+          <input type="color" id="bg-color" value="#0d0d0d"
+            oninput="syncColorText('bg-color','bg-text');updatePhonePreview()" />
+          <input type="text" id="bg-text" value="#0d0d0d"
+            oninput="syncColorPicker('bg-text','bg-color');updatePhonePreview()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- 解像度プリセット -->
+    <div class="field">
+      <div class="field-label">解像度プリセット</div>
+      <select id="preset-select">
+        <option value="shorts">YouTube Shorts (1080×1920)</option>
+        <option value="reels">Instagram Reels (1080×1920)</option>
+        <option value="tiktok">TikTok (1080×1920)</option>
+        <option value="landscape">YouTube 横型 (1920×1080)</option>
+        <option value="square">Instagram フィード (1080×1080)</option>
+      </select>
+    </div>
+
+    <hr class="divider" />
+    <p class="section-label">画像生成 AI</p>
+
+    <div class="provider-grid">
+      <div class="field">
+        <div class="field-label">プロバイダー</div>
+        <select id="img-provider" onchange="updateModelOptions()">
+          <option value="fal">Fal.ai</option>
+          <option value="gemini">Google Gemini</option>
+          <option value="openai">OpenAI</option>
+        </select>
+      </div>
+      <div class="field">
+        <div class="field-label">モデル</div>
+        <select id="img-model"></select>
+      </div>
+    </div>
+
+    <!-- 画像プロンプト -->
+    <div class="field">
+      <div class="field-label">
+        画像プロンプト
+        <span class="field-hint">カンマ区切りで複数指定</span>
+      </div>
+      <input type="text" id="img-prompts"
+        placeholder="abstract dark gradient, minimal office" />
+    </div>
+
+    <hr class="divider" />
+    <p class="section-label">BGM</p>
+
+    <div class="field">
+      <div class="field-label">
+        BGM ファイル名
+        <span class="field-hint">public/audio/ 以下のファイル名</span>
+      </div>
+      <input type="text" id="bgm-input" placeholder="lofi-business.mp3" />
+    </div>
+
+    <hr class="divider" />
+    <p class="section-label">出力</p>
+
+    <div class="field">
+      <div class="field-label">出力ファイル名</div>
+      <input type="text" id="output-name" placeholder="video_001" />
+    </div>
+
+    <div style="height:20px"></div>
+  </div><!-- /form-panel -->
+
+  <!-- 右: プレビューパネル -->
+  <div class="preview-panel">
+
+    <p class="preview-title">プレビュー</p>
+
+    <!-- シーン切り替えタブ -->
+    <div class="scene-tabs">
+      <button class="scene-tab active" onclick="switchScene('hook',this)">Hook</button>
+      <button class="scene-tab" onclick="switchScene('explain',this)">説明</button>
+      <button class="scene-tab" onclick="switchScene('outro',this)">まとめ</button>
+    </div>
+
+    <!-- スマホモックアップ -->
+    <div class="phone" id="phone-outer">
+      <div class="phone-screen" id="phone-screen">
+
+        <!-- Hook シーン -->
+        <div class="scene-preview active" id="scene-hook">
+          <div class="pv-accent-line" id="pv-accent-line-hook"></div>
+          <div class="pv-hook" id="pv-hook"></div>
+          <div class="pv-qmark" id="pv-qmark">?</div>
+        </div>
+
+        <!-- Explain シーン -->
+        <div class="scene-preview" id="scene-explain">
+          <div class="pv-keyword-badge" id="pv-keyword-badge"></div>
+          <div class="pv-points" id="pv-points-list"></div>
+        </div>
+
+        <!-- Outro シーン -->
+        <div class="scene-preview" id="scene-outro">
+          <div class="pv-accent-line" id="pv-accent-line-outro"></div>
+          <div class="pv-outro-text" id="pv-outro"></div>
+          <div class="pv-follow" id="pv-follow" style="color:var(--accent)">フォローで毎日学べる</div>
+          <div class="pv-handle" id="pv-handle"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- レンダリングステータス -->
+    <div class="render-status" id="render-status">
+      <div class="status-row">
+        <div class="status-dot working" id="status-dot"></div>
+        <div class="status-text" id="status-text">レンダリング中...</div>
+      </div>
+      <div class="status-message" id="status-message">初期化中</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+    </div>
+
+    <a class="download-link" id="download-link" style="display:none" href="#" download>
+      ⬇ MP4 をダウンロード
+    </a>
+
+    <!-- レンダリングボタン (パネル内) -->
+    <button class="btn btn-primary btn-full" id="btn-render2" disabled onclick="startRender()">
+      ⬤ レンダリング開始
+    </button>
+
+  </div><!-- /preview-panel -->
+</div><!-- /main -->
+
+<!-- JSON 確認モーダル -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title">送信 JSON</div>
+    <pre class="modal-json" id="modal-json"></pre>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">閉じる</button>
+      <button class="btn btn-primary" onclick="closeModal();startRender()">このまま送信</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// モデル定義
+// =====================================================================
+const MODELS = {
+  fal: [
+    { value: 'fal-ai/flux/schnell', label: 'Flux Schnell (最速・安価)' },
+    { value: 'fal-ai/flux/dev',     label: 'Flux Dev (バランス)' },
+    { value: 'fal-ai/flux-pro',     label: 'Flux Pro (高品質)' },
+    { value: 'fal-ai/nano-banana-pro', label: 'Nano Banana Pro (Google)' },
+  ],
+  gemini: [
+    { value: 'imagen-3.0-fast-generate-001', label: 'Imagen 3 Fast (高速)' },
+    { value: 'imagen-3.0-generate-002',      label: 'Imagen 3 (高品質)' },
+  ],
+  openai: [
+    { value: 'dall-e-3',     label: 'DALL-E 3' },
+    { value: 'gpt-image-1',  label: 'GPT Image 1' },
+  ],
+};
+
+// =====================================================================
+// 初期化
+// =====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  // デフォルトポイント
+  addPoint('自由を制限されると反発する心理');
+  addPoint('指示より提案が効果的な理由');
+  addPoint('部下のやる気を引き出す言い方');
+
+  // デフォルトテキスト
+  document.getElementById('hook-ta').value = 'なぜ上司に指示されると\nやる気が消えるのか？';
+  document.getElementById('outro-ta').value = '指示ではなく\n選択肢を与えよう';
+  document.getElementById('handle-input').value = '@bizpsych_jp';
+
+  syncPreview('hook-ta', 'hook-preview');
+  syncPreview('outro-ta', 'outro-preview');
+  updateModelOptions();
+  updatePhonePreview();
+  checkServerReady();
+});
+
+// =====================================================================
+// 改行プレビュー
+// =====================================================================
+function syncPreview(taId, previewId) {
+  const ta = document.getElementById(taId);
+  const pv = document.getElementById(previewId);
+  const text = ta.value;
+
+  if (!text.trim()) { pv.innerHTML = ''; return; }
+
+  // 改行を可視マーカー ↵ に変換して表示
+  const html = text
+    .split('\n')
+    .map((line, i, arr) =>
+      i < arr.length - 1
+        ? escHtml(line) + '<span class="br-mark">↵</span>'
+        : escHtml(line)
+    )
+    .join('');
+  pv.innerHTML = html || '';
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// カーソル位置に改行を挿入するボタン
+function insertBreak(taId) {
+  const ta = document.getElementById(taId);
+  const start = ta.selectionStart;
+  const end = ta.selectionEnd;
+  ta.value = ta.value.slice(0, start) + '\n' + ta.value.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + 1;
+  ta.focus();
+  // preview 更新
+  const previewId = taId === 'hook-ta' ? 'hook-preview' : 'outro-preview';
+  syncPreview(taId, previewId);
+  updatePhonePreview();
+}
+
+// =====================================================================
+// ポイントリスト
+// =====================================================================
+function addPoint(text = '') {
+  const list = document.getElementById('points-list');
+  const idx = list.children.length;
+
+  const item = document.createElement('div');
+  item.className = 'point-item';
+  item.dataset.idx = idx;
+  item.innerHTML = `
+    <div class="point-bullet"></div>
+    <input class="point-input" type="text" value="${escHtml(text)}"
+      placeholder="ポイント ${idx + 1}" oninput="updatePhonePreview()" />
+    <button class="btn-del" onclick="removePoint(this)" title="削除">×</button>
+  `;
+  list.appendChild(item);
+  updatePhonePreview();
+}
+
+function removePoint(btn) {
+  btn.closest('.point-item').remove();
+  updatePhonePreview();
+}
+
+function getPoints() {
+  return [...document.querySelectorAll('.point-input')]
+    .map(el => el.value.trim())
+    .filter(Boolean);
+}
+
+// =====================================================================
+// カラー同期
+// =====================================================================
+function syncColorText(pickerId, textId) {
+  document.getElementById(textId).value = document.getElementById(pickerId).value;
+}
+
+function syncColorPicker(textId, pickerId) {
+  const val = document.getElementById(textId).value;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    document.getElementById(pickerId).value = val;
+  }
+}
+
+// =====================================================================
+// モデル選択肢を更新
+// =====================================================================
+function updateModelOptions() {
+  const provider = document.getElementById('img-provider').value;
+  const sel = document.getElementById('img-model');
+  sel.innerHTML = MODELS[provider]
+    .map(m => `<option value="${m.value}">${m.label}</option>`)
+    .join('');
+}
+
+// =====================================================================
+// スマホプレビュー
+// =====================================================================
+function switchScene(name, tab) {
+  document.querySelectorAll('.scene-preview').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.scene-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('scene-' + name).classList.add('active');
+  tab.classList.add('active');
+}
+
+function updatePhonePreview() {
+  const accent = document.getElementById('accent-color').value;
+  const bg     = document.getElementById('bg-color').value;
+
+  // 背景色を phone-screen に適用
+  document.getElementById('phone-screen').style.background = bg;
+
+  // accent ライン
+  ['pv-accent-line-hook', 'pv-accent-line-outro'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.background = accent;
+  });
+
+  // Hook シーン
+  const hookText = document.getElementById('hook-ta').value;
+  const pvHook = document.getElementById('pv-hook');
+  pvHook.textContent = hookText;
+  pvHook.style.color = '#fff';
+  document.getElementById('pv-qmark').style.color = accent;
+
+  // Explain シーン
+  const keyword = document.getElementById('keyword-input').value || 'キーワード';
+  const badge = document.getElementById('pv-keyword-badge');
+  badge.textContent = keyword;
+  badge.style.color = accent;
+  badge.style.borderColor = accent;
+  badge.style.background = accent + '22';
+
+  const pointsList = document.getElementById('pv-points-list');
+  pointsList.innerHTML = getPoints().map(p => `
+    <div class="pv-point">
+      <div class="pv-dot" style="background:${accent}"></div>
+      <span>${escHtml(p)}</span>
+    </div>
+  `).join('');
+
+  // Outro シーン
+  const outroText = document.getElementById('outro-ta').value;
+  document.getElementById('pv-outro').textContent = outroText;
+  document.getElementById('pv-follow').style.color = accent;
+
+  const handle = document.getElementById('handle-input').value;
+  document.getElementById('pv-handle').textContent = handle;
+}
+
+// =====================================================================
+// サーバー準備チェック
+// =====================================================================
+let serverReady = false;
+
+async function checkServerReady() {
+  try {
+    const res = await fetch('/health');
+    const data = await res.json();
+    if (data.bundleReady) {
+      serverReady = true;
+      document.getElementById('btn-render').disabled = false;
+      document.getElementById('btn-render2').disabled = false;
+    } else {
+      // バンドル構築中は再チェック
+      setTimeout(checkServerReady, 3000);
+    }
+  } catch {
+    setTimeout(checkServerReady, 5000);
+  }
+}
+
+// =====================================================================
+// JSON 組み立て
+// =====================================================================
+function buildPayload() {
+  return {
+    preset:        document.getElementById('preset-select').value,
+    hook:          document.getElementById('hook-ta').value,
+    keyword:       document.getElementById('keyword-input').value,
+    points:        getPoints(),
+    outro:         document.getElementById('outro-ta').value,
+    handle:        document.getElementById('handle-input').value || undefined,
+    imagePrompts:  document.getElementById('img-prompts').value
+                     .split(',').map(s => s.trim()).filter(Boolean),
+    bgm:           document.getElementById('bgm-input').value || undefined,
+    accentColor:   document.getElementById('accent-color').value,
+    bgColor:       document.getElementById('bg-color').value,
+    imageProvider: document.getElementById('img-provider').value,
+    imageModel:    document.getElementById('img-model').value || undefined,
+    outputName:    document.getElementById('output-name').value || undefined,
+  };
+}
+
+// =====================================================================
+// JSON モーダル
+// =====================================================================
+function openModal() {
+  const payload = buildPayload();
+  document.getElementById('modal-json').textContent = JSON.stringify(payload, null, 2);
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+document.getElementById('btn-json').addEventListener('click', openModal);
+document.getElementById('btn-render').addEventListener('click', startRender);
+
+// Esc でモーダルを閉じる
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// =====================================================================
+// レンダリング
+// =====================================================================
+async function startRender() {
+  if (!serverReady) {
+    alert('サーバーのバンドル構築が完了していません。しばらくお待ちください。');
+    return;
+  }
+
+  const payload = buildPayload();
+  const status   = document.getElementById('render-status');
+  const dot      = document.getElementById('status-dot');
+  const text     = document.getElementById('status-text');
+  const msg      = document.getElementById('status-message');
+  const bar      = document.getElementById('progress-bar');
+  const dlLink   = document.getElementById('download-link');
+
+  // ステータスリセット
+  status.classList.add('visible');
+  dlLink.style.display = 'none';
+  dot.className = 'status-dot working';
+  text.textContent = 'レンダリング中...';
+  msg.textContent = 'API リクエスト送信中';
+  bar.style.width = '5%';
+
+  document.getElementById('btn-render').disabled = true;
+  document.getElementById('btn-render2').disabled = true;
+
+  // プログレスバーのアニメーション (擬似進行)
+  let pct = 5;
+  const fakeProgress = setInterval(() => {
+    if (pct < 90) {
+      pct += Math.random() * 3;
+      bar.style.width = Math.min(pct, 90) + '%';
+    }
+  }, 800);
+
+  try {
+    msg.textContent = '画像生成 + レンダリング中 (しばらく時間がかかります)';
+
+    const res = await fetch('/api/render', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    clearInterval(fakeProgress);
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      bar.style.width = '100%';
+      dot.className = 'status-dot done';
+      text.textContent = '完了!';
+      msg.textContent = '動画が生成されました';
+
+      dlLink.href = data.downloadUrl;
+      dlLink.style.display = 'flex';
+    } else {
+      throw new Error(data.message ?? data.error ?? 'Unknown error');
+    }
+  } catch (err) {
+    clearInterval(fakeProgress);
+    dot.className = 'status-dot error';
+    text.textContent = 'エラー';
+    msg.textContent = String(err);
+    bar.style.width = '0%';
+  } finally {
+    document.getElementById('btn-render').disabled = false;
+    document.getElementById('btn-render2').disabled = false;
+  }
+}
+</script>
+</body>
+</html>
